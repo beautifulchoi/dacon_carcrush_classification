@@ -1,0 +1,8 @@
+.vscode/
+__pycache__
+train
+test
+weights
+ensemble
+test.csv
+train.csv
