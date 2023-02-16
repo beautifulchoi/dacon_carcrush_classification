@@ -6,3 +6,5 @@ weights
 ensemble
 test.csv
 train.csv
+.ipynb_checkpoints
+*.ipynb
