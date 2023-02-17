@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 
-def train_one_epoch(model, criterion, optimizer, train_loader, device):
+def train_one_epoch(model, criterion, optimizer, train_loader, device, weight: torch.Tensor = None):
     train_loss = []
     model.train()
     for videos, labels in tqdm(iter(train_loader)):
@@ -19,8 +19,10 @@ def train_one_epoch(model, criterion, optimizer, train_loader, device):
 
         optimizer.zero_grad()
         output = model(videos)
-
-        loss = criterion(output, labels)
+        if weight:
+            loss = criterion(output, labels, weight)
+        else:
+            loss = criterion(output, labels)
         loss.backward()
         optimizer.step()
         train_loss.append(loss.item())
@@ -57,7 +59,7 @@ def validation(model, criterion, val_loader, device):
     return _val_loss, _val_score
 
 
-def train(model, criterion, optimizer, train_loader, val_loader, scheduler, device, is_parallel=False):
+def train(model, criterion, optimizer, train_loader, val_loader, scheduler, device, is_parallel=False, weight=None):
     model.to(device)
 
     if torch.cuda.device_count() > 1:
@@ -72,7 +74,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, scheduler, devi
 
     for epoch in range(1, CFG.epochs+1):
         train_loss = train_one_epoch(
-            model, criterion, optimizer, train_loader, device)  # train
+            model, criterion, optimizer, train_loader, device, weight)  # train
         _val_loss, _val_score = validation(
             model, criterion, val_loader, device)  # validation
         _train_loss = np.mean(train_loss)
@@ -102,13 +104,14 @@ def train(model, criterion, optimizer, train_loader, val_loader, scheduler, devi
     return best_model
 
 
-def run(model, df, name: str, transforms, device, save_dir, is_fold=True, is_aug=False):
+def run(model, df, name: str, transforms, device, save_dir, is_fold=True, is_aug=False, weight=None):
     if is_fold != True:
         loop = 1
     else:
         loop = CFG.fold
 
     for k in range(loop):
+
         # data load for each fold
         if is_aug == True:
             _, _, train_loader, val_loader = load_dataset(
@@ -118,7 +121,8 @@ def run(model, df, name: str, transforms, device, save_dir, is_fold=True, is_aug
                 df, name, k, transforms=transforms)
 
         model.eval()
-        optimizer = torch.optim.Adam(params=model.parameters(), lr=CFG.lr)
+        optimizer = torch.optim.AdamW(
+            params=model.parameters(), lr=CFG.lr)  # 변경
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
             optimizer, T_0=10, T_mult=2, eta_min=0.00001)
         criterion = nn.CrossEntropyLoss  # 추후 수정 예정
@@ -128,7 +132,7 @@ def run(model, df, name: str, transforms, device, save_dir, is_fold=True, is_aug
         print("_"*100)
 
         infer_model = train(model, criterion, optimizer,
-                            train_loader, val_loader, scheduler, device)
+                            train_loader, val_loader, scheduler, device, weight=weight)
 
         os.makedirs(save_dir, exist_ok=True)
         if is_fold == True:

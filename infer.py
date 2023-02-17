@@ -28,8 +28,10 @@ def run_infer(model, name: str, path: str, device, test_loader, fold=True, is_pa
 
     for k in range(CFG.fold):
         if fold == True:
-            path = path[:-3]+'_{}fold.pt'.format(k)
-        state_dict = torch.load(path)
+            re_path = path[:-3]+'_{}fold.pt'.format(k)
+        else:
+            re_path = path
+        state_dict = torch.load(re_path)
 
         if is_parallel == True:
             keys = state_dict.keys()

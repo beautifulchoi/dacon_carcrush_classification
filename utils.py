@@ -2,6 +2,9 @@ from data import CustomDataset, Transforms
 from torch.utils.data import ConcatDataset
 from torch.utils.data import Dataset, DataLoader
 from config import CFG
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
+import torch
 
 # get data loader
 
@@ -81,3 +84,11 @@ def make_cross_augment(df, target_index: int, k: int, sampling=20):
         ValueError("타겟인덱스 잘못정함: 1이나 2여야")
 
     return dset
+
+
+def cal_weight(df, name):
+    class_weights = compute_class_weight(
+        'balanced', classes=np.unique(df[name]), y=df[name])
+    weights = torch.tensor(class_weights, dtype=torch.float)
+
+    return weights
