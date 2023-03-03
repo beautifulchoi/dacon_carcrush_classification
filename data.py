@@ -62,7 +62,7 @@ class Transforms:
     weather = A.Compose([
         # A.CenterCrop(480,854,p=1.0),
         A.Resize(height=CFG.img_size, width=CFG.img_size),
-        A.Superpixels(p=0.3),
+        # A.Superpixels(p=0.3),
         # A.HorizontalFlip(0.5),
         A.Normalize(mean=0.0, std=1.0),
         ToTensorV2()
@@ -93,8 +93,19 @@ class Transforms:
 
     snow = A.Compose([
         A.Resize(height=CFG.img_size, width=CFG.img_size),
-        A.RandomSnow(brightness_coeff=2, snow_point_lower=0.3,
+        A.RandomSnow(brightness_coeff=2.5, snow_point_lower=0.3,
                      snow_point_upper=0.5, p=1),
+        A.Normalize(mean=0.0, std=1.0),
+        ToTensorV2()
+    ], p=1, additional_targets={f"image{i}": "image" for i in range(1, 50)})
+
+    darken = A.Compose([
+        A.Resize(height=CFG.img_size, width=CFG.img_size),
+        A.RandomBrightnessContrast(
+            brightness_limit=(-0.2, 0), contrast_limit=(-0.7, -0.6), p=1),
+        A.CLAHE(clip_limit=(1, 4), tile_grid_size=(8, 8), p=1),
+        # A.ToGray(0.5),
+        # A.RandomSunFlare(flare_roi=(0, 0.5, 1, 1),angle_lower=0.5, src_radius=CFG.img_size//2, p=0.3),
         A.Normalize(mean=0.0, std=1.0),
         ToTensorV2()
     ], p=1, additional_targets={f"image{i}": "image" for i in range(1, 50)})

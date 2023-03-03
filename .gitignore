@@ -8,3 +8,5 @@ test.csv
 train.csv
 .ipynb_checkpoints
 *.ipynb
+*.csv
+*.pt

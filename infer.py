@@ -23,10 +23,16 @@ def inference(model, test_loader, device):
 # path: ./weights/r3d_per_label_{}_Transform
 
 
-def run_infer(model, name: str, path: str, device, test_loader, fold=True, is_parallel=False):
+def run_infer(Model: torch.nn.Module, name: str, path: str, device, test_loader, fold=True, is_parallel=False):
     preds_each = []
 
     for k in range(CFG.fold):
+        # model reload for each step
+        if (name == "weather" or "mix"):
+            model = Model(num_classes=3, binary=False)
+        else:
+            model = Model(num_classes=2)
+
         if fold == True:
             re_path = path[:-3]+'_{}fold.pt'.format(k)
         else:
@@ -56,18 +62,20 @@ def run_infer(model, name: str, path: str, device, test_loader, fold=True, is_pa
         if fold != True:
             break
 
+    del model
+
     return preds_each
 
 
-def voting(name, preds: list, save_each=False, save_result=False):
+def voting(name, preds: list, save_each: str = None, save_result: str = None):
     vote_preds = []
 
     for k in range(CFG.fold):
         sample = pd.read_csv('./sample_submission.csv')
 
         sample[name] = preds[k]
-        if save_each == True:
-            sample.to_csv(f'./ensemble/weather_fold{k}.csv', index=False)
+        if save_each != None:
+            sample.to_csv(save_each+f'weather_fold{k}.csv', index=False)
 
     cols = list(zip(*preds))
     for c in cols:
@@ -76,7 +84,7 @@ def voting(name, preds: list, save_each=False, save_result=False):
 
     ss = pd.read_csv('./sample_submission.csv')
     ss[name] = vote_preds
-    if save_result == True:
-        ss.to_csv('vote_{}.csv'.format(name), index=False)
+    if save_result != None:
+        ss.to_csv(save_result+'vote_{}.csv'.format(name), index=False)
 
     return vote_preds, ss
