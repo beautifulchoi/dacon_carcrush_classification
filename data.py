@@ -102,7 +102,7 @@ class Transforms:
     darken = A.Compose([
         A.Resize(height=CFG.img_size, width=CFG.img_size),
         A.RandomBrightnessContrast(
-            brightness_limit=(-0.2, 0), contrast_limit=(-0.7, -0.6), p=1),
+            brightness_limit=(-0.2, -0.15), contrast_limit=(-0.7, -0.65), p=1),
         A.CLAHE(clip_limit=(1, 4), tile_grid_size=(8, 8), p=1),
         # A.ToGray(0.5),
         # A.RandomSunFlare(flare_roi=(0, 0.5, 1, 1),angle_lower=0.5, src_radius=CFG.img_size//2, p=0.3),

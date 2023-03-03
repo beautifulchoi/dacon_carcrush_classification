@@ -28,7 +28,7 @@ def run_infer(Model: torch.nn.Module, name: str, path: str, device, test_loader,
 
     for k in range(CFG.fold):
         # model reload for each step
-        if (name == "weather" or "mix"):
+        if (name == "weather") or (name == "mix"):
             model = Model(num_classes=3, binary=False)
         else:
             model = Model(num_classes=2)

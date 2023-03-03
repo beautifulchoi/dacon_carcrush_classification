@@ -8,6 +8,7 @@ import torch
 from matplotlib import pyplot as plt
 import random
 
+
 # get data loader
 
 
@@ -27,8 +28,10 @@ def load_dataset(df, name, k, transforms=Transforms.other, get_loader=True, make
                 if tr_fold == k:  # 검증셋에서는 통과
                     print(f"{tr_fold}fold: 검증셋은 통과")
                     continue
-                aug_dset_rain = make_cross_augment(df, 2, tr_fold, sampling=50)
-                aug_dset_snow = make_cross_augment(df, 1, tr_fold, sampling=50)
+                aug_dset_rain = make_cross_augment(
+                    df, 2, tr_fold, sampling=100)
+                aug_dset_snow = make_cross_augment(
+                    df, 1, tr_fold, sampling=120)
                 train_dataset = ConcatDataset(
                     [train_dataset, aug_dset_rain, aug_dset_snow])
 

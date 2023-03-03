@@ -1,3 +1,4 @@
+from torch.utils.tensorboard import SummaryWriter
 import os
 import numpy as np
 import torch
@@ -26,7 +27,7 @@ def train_one_epoch(model, criterion, optimizer, train_loader, device):
         optimizer.step()
         train_loss.append(loss.item())
 
-    return train_loss  # score 변화없으면 잘못된거니까 바꾸기 -> 업데이트를 안하는거겠지 옵티마이저 반환안해줘서
+    return train_loss
 
 
 def validation(model, criterion, val_loader, device):
@@ -58,7 +59,7 @@ def validation(model, criterion, val_loader, device):
     return _val_loss, _val_score
 
 
-def train(model, criterion, optimizer, train_loader, val_loader, scheduler, device, is_parallel=False, ce_weight=None):
+def train(model, criterion, optimizer, train_loader, val_loader, scheduler, device, writer, is_parallel=False, ce_weight=None):
     model.to(device)
 
     if torch.cuda.device_count() > 1:
@@ -87,6 +88,11 @@ def train(model, criterion, optimizer, train_loader, val_loader, scheduler, devi
         print(
             f'Epoch [{epoch}], Train Loss : [{_train_loss:.5f}] Val Loss : [{_val_loss:.5f}] Val F1 : [{_val_score:.5f}]')
 
+        # write loss of each epoch
+        writer.add_scalar('Train/Loss', _train_loss.item(), epoch)
+        writer.add_scalar('Val/Loss', _val_loss.item(), epoch)
+        writer.add_scalar('Val/F1 Score', _val_score, epoch)
+
         if scheduler is not None:
             scheduler.step(_val_score)
 
@@ -101,10 +107,12 @@ def train(model, criterion, optimizer, train_loader, val_loader, scheduler, devi
 
         if best_val_score >= 0.999:
             print("already on best score")
+            writer.close()
             break
 
         if cnt == CFG.earlystop:
             print("early stopping done")
+            writer.close()
             break
 
     return best_model
@@ -119,6 +127,10 @@ def run(Model: nn.Module, df, name: str, transforms, device, save_dir, is_fold=T
         loop = CFG.fold
 
     for k in range(loop):
+
+        # tensorboard 추가
+        writer = SummaryWriter(save_dir+f'/{k}fold')
+
         # model reload for each step
         if (name == "weather") or (name == "crush+ego"):
             model = Model(num_classes=3, binary=False)
@@ -150,7 +162,7 @@ def run(Model: nn.Module, df, name: str, transforms, device, save_dir, is_fold=T
         print("_"*100)
 
         infer_model = train(model, criterion, optimizer,
-                            train_loader, val_loader, scheduler, device, is_parallel, ce_weight=ce_weight)
+                            train_loader, val_loader, scheduler, device, writer, is_parallel, ce_weight=ce_weight)
 
         os.makedirs(save_dir, exist_ok=True)
         if is_fold == True:
