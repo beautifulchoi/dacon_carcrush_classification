@@ -75,7 +75,7 @@ def voting(name, preds: list, save_each: str = None, save_result: str = None):
 
         sample[name] = preds[k]
         if save_each != None:
-            sample.to_csv(save_each+f'weather_fold{k}.csv', index=False)
+            sample.to_csv(save_each+f'{name}_fold{k}.csv', index=False)
 
     cols = list(zip(*preds))
     for c in cols:
@@ -88,3 +88,22 @@ def voting(name, preds: list, save_each: str = None, save_result: str = None):
         ss.to_csv(save_result+'vote_{}.csv'.format(name), index=False)
 
     return vote_preds, ss
+
+def vote_result(ss_list:list , save_dir: str = None):
+#ss_list에 csv 경로 담기
+    preds=[]
+    vote_preds=[]
+    result = pd.read_csv('./sample_submission.csv')
+    for ss in ss_list: 
+        csv=pd.read_csv(ss)
+        preds.append(csv['label'].tolist())
+    cols = list(zip(*preds))
+    for c in cols:
+        most = Counter(c).most_common()[0][0]
+        vote_preds.append(most)
+
+    result['label'] = vote_preds
+    if save_dir != None:
+        result.to_csv(save_dir+'ensemble_models.csv', index=False)
+
+    return result,cols

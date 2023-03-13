@@ -29,9 +29,9 @@ def load_dataset(df, name, k, transforms=Transforms.other, get_loader=True, make
                     print(f"{tr_fold}fold: 검증셋은 통과")
                     continue
                 aug_dset_rain = make_cross_augment(
-                    df, 2, tr_fold, sampling=100)
+                    df, 2, tr_fold, sampling=50)
                 aug_dset_snow = make_cross_augment(
-                    df, 1, tr_fold, sampling=120)
+                    df, 1, tr_fold, sampling=50)
                 train_dataset = ConcatDataset(
                     [train_dataset, aug_dset_rain, aug_dset_snow])
 
@@ -58,18 +58,19 @@ def load_dataset(df, name, k, transforms=Transforms.other, get_loader=True, make
                 weighted_sampling, num_samples=len(train_dataset), replacement=True)
 
             train_loader = DataLoader(
-                train_dataset, batch_size=CFG.batch_size, sampler=sampler, num_workers=2)
+                train_dataset, batch_size=CFG.batch_size, sampler=sampler, num_workers=10)
             val_loader = DataLoader(
                 val_dataset, batch_size=CFG.batch_size, shuffle=False, num_workers=2)
         else:
             train_loader = DataLoader(
-                train_dataset, batch_size=CFG.batch_size, shuffle=True, num_workers=2)
+                train_dataset, batch_size=CFG.batch_size, shuffle=True, num_workers=10)
             val_loader = DataLoader(
                 val_dataset, batch_size=CFG.batch_size, shuffle=False, num_workers=2)
 
         return train_dataset, val_dataset, train_loader, val_loader
 
     return train_dataset, val_dataset
+
 
 
 def split_weather_subset(df):

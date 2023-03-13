@@ -62,7 +62,7 @@ class Transforms:
     weather = A.Compose([
         # A.CenterCrop(480,854,p=1.0),
         A.Resize(height=CFG.img_size, width=CFG.img_size),
-        # A.Superpixels(p=0.3),
+        # A.Superpixels(p=0.1),
         # A.HorizontalFlip(0.5),
         A.Normalize(mean=0.0, std=1.0),
         ToTensorV2()
@@ -102,10 +102,23 @@ class Transforms:
     darken = A.Compose([
         A.Resize(height=CFG.img_size, width=CFG.img_size),
         A.RandomBrightnessContrast(
-            brightness_limit=(-0.2, -0.15), contrast_limit=(-0.7, -0.65), p=1),
+            brightness_limit=(-0.2, -0.15), contrast_limit=(-0.5, -0.1), p=1),
         A.CLAHE(clip_limit=(1, 4), tile_grid_size=(8, 8), p=1),
         # A.ToGray(0.5),
         # A.RandomSunFlare(flare_roi=(0, 0.5, 1, 1),angle_lower=0.5, src_radius=CFG.img_size//2, p=0.3),
         A.Normalize(mean=0.0, std=1.0),
         ToTensorV2()
     ], p=1, additional_targets={f"image{i}": "image" for i in range(1, 50)})
+    
+    crop = A.Compose([
+        A.RandomCrop(540,960,p=1.0),
+        A.OneOf([
+        A.Crop(x_min=0, x_max=480, y_min=0, y_max=540),
+        A.Crop(x_min=480, x_max=960, y_min=0, y_max=540)
+        ], p=1.0),
+        A.Resize(height=CFG.img_size, width=CFG.img_size),
+        A.HorizontalFlip(0.5),
+        A.Normalize(mean=0.0, std=1.0),
+        ToTensorV2()
+    ], p=1, additional_targets={f"image{i}": "image" for i in range(1, 50)})
+    

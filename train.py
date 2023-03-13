@@ -1,3 +1,5 @@
+# from balanced_loss import Loss
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import os
 import numpy as np
@@ -70,6 +72,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, scheduler, devi
     criterion = criterion().to(device)
     if ce_weight != None:
         ce_weight = ce_weight.to(device)
+        # print(next(model.parameters()).is_cuda)  # 모델 들어있나 체크
     best_val_score = 0
     best_model = None
     cnt = 0
@@ -151,9 +154,10 @@ def run(Model: nn.Module, df, name: str, transforms, device, save_dir, is_fold=T
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
             optimizer, T_0=10, T_mult=2, eta_min=0.00001)
         criterion = nn.CrossEntropyLoss  # 추후 수정 예정
+        # criterion = FocalLoss
 
         if weight != None:
-            ce_weight = nn.CrossEntropyLoss(weight=weight)
+            ce_weight = criterion(weight=weight)
         else:
             ce_weight = None
 
@@ -174,3 +178,22 @@ def run(Model: nn.Module, df, name: str, transforms, device, save_dir, is_fold=T
 
         del infer_model
         del model
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None, gamma=2, reduction='mean'):
+        super(FocalLoss, self).__init__()
+
+        self.weight = weight
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+
+        ce_loss = F.cross_entropy(
+            inputs, targets, weight=self.weight, reduction=self.reduction)
+        pt = torch.exp(-ce_loss)
+
+        focal_loss = ((1-pt)**self.gamma * ce_loss).mean()
+
+        return focal_loss
